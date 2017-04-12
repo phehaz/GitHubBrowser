@@ -1,6 +1,6 @@
 'use-strict'
 
-var buffer = require('buffer');
+var encoding = require('NativeModules').Encoding;
 var _ = require('lodash');
 import { AsyncStorage } from 'react-native';
 
@@ -36,14 +36,14 @@ class AuthService {
     }
 
     login(credentials, cb){
-        var encodedAuthString = new buffer.Buffer(credentials.username + ':' + credentials.password).toString('base64');
-
-        fetch('https://api.github.com/user', {
+        var authString = credentials.username + ':' + credentials.password;
+        encoding.base64Encode(authString, (encodedAuth) => {
+            fetch('https://api.github.com/user', {
             headers: {
-                'Authorization': 'Basic ' + encodedAuthString
+                'Authorization': 'Basic ' + encodedAuth
             }
-        })
-        .then((response) => {
+            })
+            .then((response) => {
             if(response.status >= 200 && response.status < 300){
                 return response;
             }
@@ -51,15 +51,15 @@ class AuthService {
                 badCredentials: response.status == 401,
                 unknownError: response.status != 401
             }
-        })
-        .then((response) => {
+            })
+            .then((response) => {
             return response.json();
-        })
-        .then((results) => {
+            })
+            .then((results) => {
             console.log(results);
 
             AsyncStorage.multiSet([
-                [authKey, encodedAuthString],
+                [authKey, encodedAuth],
                 [userKey, JSON.stringify(results)]
             ], (err) => {
                 if(err){
@@ -68,10 +68,12 @@ class AuthService {
 
                 return cb({success: true});
             })
-        })
-        .catch((err) => {
+            })
+            .catch((err) => {
             return cb(err);
+            });            
         });
+
     }
 }
 

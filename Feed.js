@@ -9,10 +9,10 @@ import {
     ActivityIndicator,
     Image,
     TouchableHighlight,
-    NavigatorIOS
 } from 'react-native';
 
 var moment = require('moment');
+var PushPayload = require('./PushPayload');
 
 class Feed extends Component {
     constructor(props){
@@ -69,9 +69,9 @@ class Feed extends Component {
             .then((response) => response.json())
             .then((responseData) => {
                 console.log(responseData);
-                var feedItems = responseData;
-                    // responseData.filter( (ev) => 
-                    //     ev.type == 'PushEvent');
+                var feedItems = //responseData;
+                    responseData.filter( (ev) => 
+                        ev.type == 'PullRequestEvent');
                 this.setState({
                     dataSource: this.state.dataSource
                         .cloneWithRows(feedItems),
@@ -95,7 +95,7 @@ class Feed extends Component {
                         <Text style={styles.rowText}>{moment(rowData.created_at).fromNow()}</Text>
                         <Text style={[styles.rowText, styles.authorText]}>{rowData.actor.login}</Text>
                         <Text style={styles.rowText}>at <Text style={[styles.rowText, styles.repoText]}>{rowData.repo.name}</Text></Text>
-                        
+                        <Text style={styles.rowText}>Type: {rowData.type}</Text>
                     </View>
                 </View>
             </TouchableHighlight>
@@ -104,8 +104,15 @@ class Feed extends Component {
 
     onRowSelected(sectionID, rowID) {
         console.log('Selected row: ' + rowID);
-        var rowData = this.state.dataSource.getRowData(0, rowID);
-        console.log(rowData);
+        var dataFromSource = this.state.dataSource.getRowData(0, rowID);
+        console.log(dataFromSource);
+        this.props.navigator.push({
+            title: 'Issue event',
+            component: PushPayload,
+            passProps:{
+                pushEvent: dataFromSource
+            } 
+        })
     }
 }
 
